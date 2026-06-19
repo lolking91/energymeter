@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: energymeter
+
+# Fox ESS Open API – all secrets via environment variables
+foxess:
+  api-key: ${FOXESS_API_KEY}
+  device-sn: ${FOXESS_DEVICE_SN}
+  base-url: ${FOXESS_BASE_URL:https://www.foxesscloud.com}
+
+# InfluxDB 3 connection (raw, full-resolution database;
+# downsampling to the long-term database runs server-side)
+influxdb:
+  url: ${INFLUXDB_URL:http://localhost:8181}
+  token: ${INFLUXDB_TOKEN}
+  database: ${INFLUXDB_DATABASE:energy_raw}
+
+# Shelly devices polled via their local RPC API (no cloud, no auth)
+shelly:
+  devices:
+    - name: solar
+      host: ${SHELLY_SOLAR_HOST}
+      type: pm-mini
+
+# Polling schedule
+scheduler:
+  interval-ms: ${SCHEDULER_INTERVAL_MS:300000}    # 5 minutes
+  initial-delay-ms: ${SCHEDULER_INITIAL_DELAY_MS:5000}
+
+# Expose Spring Actuator health endpoint
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    de.energymeter: INFO
