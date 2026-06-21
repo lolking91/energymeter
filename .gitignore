@@ -8,6 +8,8 @@ target/
 .env
 *.env
 !.env.example
+application-local.yml
+!application-local.yml.example
 
 # IDE
 .idea/

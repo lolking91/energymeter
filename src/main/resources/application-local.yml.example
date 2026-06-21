@@ -1,0 +1,26 @@
+# Template for local development secrets.
+#
+# Copy this file to "application-local.yml" (same directory) and fill in
+# real values. "application-local.yml" is gitignored and must never be
+# committed. Activate this profile with:
+#
+#   mvn spring-boot:run -Dspring-boot.run.profiles=local
+#   (or set SPRING_PROFILES_ACTIVE=local / select the "local" profile in
+#   your IDE's run configuration)
+#
+# Only secrets that have no sensible default in application.yml need to be
+# overridden here — everything else (URLs, ports, intervals) already falls
+# back to a working localhost default.
+
+foxess:
+  api-key: your-foxess-api-key-here
+  device-sn: your-inverter-serial-number
+
+influxdb:
+  token: your-influxdb-admin-token
+
+shelly:
+  devices:
+    - name: solar
+      host: 192.168.x.x
+      type: pm-mini

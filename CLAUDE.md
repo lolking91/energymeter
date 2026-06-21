@@ -113,8 +113,64 @@ Downsampling design:
   server-side on a schedule, aggregating raw points into **hourly
   avg/min/max** values
 - This application **only ever writes to the raw database** — downsampling
-  is entirely a database-side concern, not implemented in Java. The plugin
-  config still needs to be added (Docker/InfluxDB setup step, not yet done).
+  is entirely a database-side concern, not implemented in Java.
+
+### One-time InfluxDB 3 setup (after first `docker compose up`)
+
+The `influxdb3-core` image has no `DOCKER_INFLUXDB_INIT_*` env vars like v2 —
+admin token, databases and the downsample trigger must be created once via
+the CLI:
+
+```bash
+# 1. Create the admin token (shown only once — store it as INFLUXDB_TOKEN in .env)
+docker compose exec influxdb3-core influxdb3 create token --admin
+
+# 2. Create the raw and downsampled databases
+docker compose exec influxdb3-core influxdb3 create database energy_raw --token <token>
+docker compose exec influxdb3-core influxdb3 create database energy_downsampled --token <token>
+
+# 3. Create the hourly downsample trigger (community/official downsampler plugin)
+docker compose exec influxdb3-core influxdb3 create trigger \
+  --database energy_raw \
+  --token <token> \
+  --path "gh:influxdata/downsampler/downsampler.py" \
+  --trigger-spec "every:1h" \
+  --trigger-arguments 'source_measurement=energy,target_measurement=energy,interval=1h,window=1h,calculations=avg.min.max,target_database=energy_downsampled'
+```
+
+> Note: never pass a real token as a plain CLI argument in scripts that get
+> logged or committed — use `--token` interactively or via a short-lived env
+> var, not hard-coded.
+
+## Local Development
+
+Run only the infrastructure containers, then run Spring Boot directly from
+the IDE/Maven against their published ports:
+
+```bash
+docker compose up -d          # InfluxDB 3 Core + Grafana only (backend has profile "full")
+```
+
+Secrets that have no working `localhost` default (Fox ESS API key/device SN,
+InfluxDB token, Shelly host) are supplied via a **`local` Spring profile**,
+not the `.env` file used by Docker Compose — Spring Boot does not read
+`.env` files, so values would otherwise never reach the JVM process:
+
+1. Copy `src/main/resources/application-local.yml.example` to
+   `application-local.yml` (same directory) and fill in real values
+2. `application-local.yml` is gitignored — never commit it
+3. Activate the profile:
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=local
+   ```
+   (or set `SPRING_PROFILES_ACTIVE=local` / select the `local` profile in
+   your IDE's run configuration)
+
+To run the full stack in Docker instead (including the backend container):
+
+```bash
+docker compose --profile full up -d --build
+```
 
 ## Build & Test
 
