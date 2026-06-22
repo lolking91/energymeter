@@ -176,6 +176,26 @@ To run the full stack in Docker instead (including the backend container):
 docker compose --profile full up -d --build
 ```
 
+## Grafana
+
+Datasource and dashboards are provisioned as code (not clicked together in
+the UI), so they're version-controlled and survive a fresh `docker compose up`:
+
+- `grafana/provisioning/datasources/influxdb.yml` — the InfluxDB 3 datasource,
+  using Grafana's **SQL** query mode (Flight SQL/gRPC under the hood; InfluxQL
+  and Flux don't apply to InfluxDB 3). Token is injected via `$INFLUXDB_TOKEN`
+  (Grafana's built-in env var substitution in provisioning files), passed
+  through from `.env` via the `INFLUXDB_TOKEN` entry in the `grafana` service's
+  `environment` block in `docker-compose.yml`.
+- `grafana/provisioning/dashboards/dashboards.yml` — dashboard provider config,
+  loads any dashboard JSON placed in `grafana/dashboards/`
+- `grafana/dashboards/solar-power.json` — first panel: raw `power` field for
+  the `solar` Shelly device, **as measured** (currently negative, since the
+  PM Mini's CT clamp is wired such that production reads negative). This is
+  intentional — sign flipping is a per-panel/per-query display decision (e.g.
+  `SELECT -power ...` or a transform), not something corrected at ingestion,
+  so `ShellyService`/`InfluxDbService` stay generic across device roles.
+
 ## Build & Test
 
 ```bash

@@ -1,0 +1,10 @@
+# Tells Grafana to auto-load any dashboard JSON files placed in
+# /etc/grafana/dashboards (mounted from ./grafana/dashboards).
+apiVersion: 1
+
+providers:
+  - name: energymeter
+    folder: Energy Meter
+    type: file
+    options:
+      path: /etc/grafana/dashboards
