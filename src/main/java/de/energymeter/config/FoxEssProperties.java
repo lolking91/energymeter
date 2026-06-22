@@ -10,6 +10,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "foxess")
 public record FoxEssProperties(
+        // Whether the Fox ESS polling scheduler should run at all
+        boolean enabled,
         // Fox ESS Open API key (generated in the Fox ESS app)
         String apiKey,
         // Serial number of the inverter device

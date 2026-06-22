@@ -8,6 +8,7 @@ import de.energymeter.health.HealthStatus;
 import de.energymeter.influx.InfluxDbService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,8 +21,12 @@ import java.util.List;
  * <p>The polling interval is configured via {@code scheduler.interval-ms}
  * (default: {@code 300000} ms = 5 minutes). Fox ESS updates device data
  * approximately every 5 minutes, so polling more frequently is not beneficial.
+ *
+ * <p>Disabled entirely when {@code foxess.enabled=false} (e.g. while only
+ * the Shelly integration is in use).
  */
 @Component
+@ConditionalOnProperty(prefix = "foxess", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class FoxessDataScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(FoxessDataScheduler.class);

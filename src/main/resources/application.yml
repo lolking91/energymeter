@@ -3,9 +3,12 @@ spring:
     name: energymeter
 
 # Fox ESS Open API – all secrets via environment variables
+# Set FOXESS_ENABLED=false to disable the Fox ESS scheduler entirely
+# (e.g. while only the Shelly integration is in use)
 foxess:
-  api-key: ${FOXESS_API_KEY}
-  device-sn: ${FOXESS_DEVICE_SN}
+  enabled: ${FOXESS_ENABLED:true}
+  api-key: ${FOXESS_API_KEY:}
+  device-sn: ${FOXESS_DEVICE_SN:}
   base-url: ${FOXESS_BASE_URL:https://www.foxesscloud.com}
 
 # InfluxDB 3 connection (raw, full-resolution database;

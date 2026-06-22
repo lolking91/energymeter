@@ -75,6 +75,10 @@ secret is needed beyond the device's IP/hostname.
 
 ## Fox ESS Open API
 
+- **Feature flag:** `foxess.enabled` (env `FOXESS_ENABLED`, default `true`) —
+  set to `false` to disable the Fox ESS scheduler entirely, e.g. while only
+  the Shelly integration is in use. `api-key`/`device-sn` default to empty
+  strings so the app still starts without them when disabled.
 - **Base URL:** `https://www.foxesscloud.com`
 - **Auth:** MD5 signature per request – see `FoxEssClient.buildSignature()`
   Formula: `MD5("token={apiKey}&path={path}&timestamp={epoch_ms}&lang=en")`
