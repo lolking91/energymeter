@@ -13,7 +13,7 @@
 
     <groupId>de.energymeter</groupId>
     <artifactId>energymeter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>energymeter</name>
     <description>Home energy monitoring for energy production and consumption via InfluxDB and Grafana</description>
 
