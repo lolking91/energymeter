@@ -1,0 +1,13 @@
+# Local development override — builds the backend image from source instead
+# of pulling from ghcr.io. Used for testing the production Docker image
+# without a release.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml --profile full up --build
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: energymeter:local

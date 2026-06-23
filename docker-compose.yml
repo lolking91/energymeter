@@ -38,13 +38,20 @@ services:
     container_name: energymeter-grafana
     depends_on:
       - influxdb3-core
+    # Bound to localhost only — the central nginx in the infra repo proxies
+    # requests from outside at /energymeter to http://127.0.0.1:3000.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
       # Read by the $INFLUXDB_TOKEN reference in provisioning/datasources/influxdb.yml
       INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      # Defaults keep plain "http://localhost:3000" working for local dev.
+      # On the Pi, .env overrides these to serve Grafana under /energymeter
+      # behind the central nginx reverse proxy.
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost:3000}
+      GF_SERVER_SERVE_FROM_SUB_PATH: ${GF_SERVER_SERVE_FROM_SUB_PATH:-false}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -55,15 +62,17 @@ services:
     # Not started by a plain "docker compose up" — only with "--profile full",
     # so local development can run InfluxDB/Grafana in Docker while running
     # Spring Boot directly from the IDE/mvn against the published ports.
+    # Pulls the prebuilt ARM64 image from the release pipeline; use
+    # docker-compose.local.yml to build from source instead.
     profiles: ["full"]
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/lolking91/energymeter:latest
     container_name: energymeter-backend
     depends_on:
       - influxdb3-core
+    # Internal-only: no public UI, just a background poller + health endpoint
+    # checked locally on the Pi (not proxied through nginx).
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
     environment:
       FOXESS_ENABLED: ${FOXESS_ENABLED:-true}
       FOXESS_API_KEY: ${FOXESS_API_KEY}

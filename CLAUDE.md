@@ -212,6 +212,17 @@ Docker images must support the `linux/arm64` platform. Prefer multi-arch
 base images (e.g. `eclipse-temurin:21-jre-alpine`, `influxdb:3-core`,
 `grafana/grafana`) which publish ARM64 variants automatically.
 
+**Release pipeline:** pushing a `v*` tag builds an ARM64 backend image and
+publishes it to `ghcr.io/lolking91/energymeter` (see
+[.github/workflows/release.yml](.github/workflows/release.yml)). The Pi pulls
+this image rather than building from source — `docker-compose.local.yml` is
+the only place that builds locally (for testing the production image).
+
+**Networking:** Grafana and the backend bind to `127.0.0.1` only. The
+central nginx reverse proxy in the sibling **`infrastructure`** repo handles
+routing from outside (Grafana under `/energymeter`); the backend has no
+public route since it's a background poller, not a UI.
+
 ## Commit Guidelines
 
 - Simplified Conventional Commits, restricted to: `feat`, `fix`, `doc`, `refactor`, `chore`

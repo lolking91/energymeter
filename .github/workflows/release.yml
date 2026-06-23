@@ -1,0 +1,63 @@
+name: Release
+
+# Triggered when a version tag is pushed (e.g. v1.0.0, v1.2.3)
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # required to create GitHub Releases
+      packages: write   # required to push to ghcr.io
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Extract the plain version number from the tag (strips the leading "v")
+      # e.g. tag "v1.2.3" → VERSION="1.2.3"
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      # Set up Docker Buildx for multi-platform builds (ARM64 for Raspberry Pi)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Authenticate against GitHub Container Registry using the built-in token —
+      # no manual secret needed
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the ARM64 image and push two tags:
+      #   :latest          → always points to the newest release
+      #   :<version>       → immutable version tag (e.g. :1.2.3)
+      # GitHub Actions cache is used to speed up repeated builds.
+      - name: Build and push Docker image (ARM64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Create a GitHub Release with auto-generated release notes
+      # (based on merged PRs and commits since the previous tag)
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          make_latest: true
