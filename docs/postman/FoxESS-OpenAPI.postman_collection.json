@@ -1,0 +1,63 @@
+{
+  "info": {
+    "name": "Fox ESS Open API",
+    "description": "Manual test collection for the Fox ESS Open API real-time query endpoint. Pre-request script computes the MD5 signature (MD5(path + \\r\\n + token + \\r\\n + timestamp)) required by Fox ESS, so only the apiKey and deviceSn collection variables need to be filled in.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://www.foxesscloud.com" },
+    { "key": "apiKey", "value": "", "type": "secret" },
+    { "key": "deviceSn", "value": "" },
+    { "key": "timestamp", "value": "" },
+    { "key": "signature", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Get real-time device data",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const apiKey = pm.collectionVariables.get('apiKey');",
+              "if (!apiKey) {",
+              "    throw new Error('Set the \"apiKey\" collection variable before sending this request.');",
+              "}",
+              "const path = '/op/v0/device/real/query';",
+              "const timestamp = Date.now();",
+              "// IMPORTANT: \\r\\n here must be the literal two-character sequences",
+              "// backslash-r and backslash-n, not actual CR/LF bytes (confirmed against the live API).",
+              "const payload = path + '\\\\r\\\\n' + apiKey + '\\\\r\\\\n' + timestamp;",
+              "const signature = CryptoJS.MD5(payload).toString();",
+              "",
+              "pm.collectionVariables.set('timestamp', timestamp);",
+              "pm.collectionVariables.set('signature', signature);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "token", "value": "{{apiKey}}" },
+          { "key": "timestamp", "value": "{{timestamp}}" },
+          { "key": "signature", "value": "{{signature}}" },
+          { "key": "lang", "value": "en" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "User-Agent", "value": "PostmanRuntime-FoxESS-Test/1.0" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sn\": \"{{deviceSn}}\",\n  \"variables\": [\n    \"pvPower\",\n    \"generationPower\",\n    \"feedInPower\",\n    \"gridConsumptionPower\",\n    \"loadsPower\",\n    \"SoC\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/op/v0/device/real/query",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "op", "v0", "device", "real", "query" ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

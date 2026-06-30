@@ -19,8 +19,11 @@ import java.util.Map;
  * <p>Handles request signing: Fox ESS requires an MD5 signature built from
  * the API key, request path and a millisecond timestamp.
  *
- * <p>Signature formula (Fox ESS Open API docs):
- * {@code MD5("token={apiKey}&path={path}&timestamp={timestamp}&lang=en")}
+ * <p>Signature formula (Fox ESS Open API docs): {@code MD5(path + token + timestamp)},
+ * joined with the literal two-character sequence {@code \r\n} (backslash-r,
+ * backslash-n as text) between each part — <strong>not</strong> actual CR/LF
+ * bytes. Confirmed against the live API; the doc's own Python sample uses a
+ * raw string ({@code fr'...'}) which is easy to misread as real CR/LF.
  */
 @Component
 public class FoxEssClient {
@@ -41,8 +44,10 @@ public class FoxEssClient {
     /**
      * Fetches real-time device data for the configured inverter.
      *
-     * <p>Variables requested cover PV generation, grid feed-in/draw and
-     * load consumption — the core metrics of a Balkonkraftwerk setup.
+     * <p>Variables requested cover PV generation, grid feed-in/draw and yield
+     * totals — the core metrics of a Balkonkraftwerk setup. Battery and
+     * 3-phase variables are omitted; the M1-800-E has no battery and is
+     * single-phase.
      *
      * @return parsed response; never {@code null}
      * @throws FoxEssApiException if the API returns a non-zero errno or the call fails
@@ -56,10 +61,10 @@ public class FoxEssClient {
                 "variables", List.of(
                         "pvPower",
                         "generationPower",
-                        "feedInPower",
+                        "feedinPower",          // note lowercase "in" - API field is "feedinPower", not "feedInPower"
                         "gridConsumptionPower",
-                        "loadsPower",
-                        "SoC"           // battery state-of-charge (N/A on M1-800-E, returns 0)
+                        "todayYield",           // today's PV yield in kWh
+                        "PVEnergyTotal"         // lifetime PV yield in kWh
                 )
         );
 
@@ -87,15 +92,19 @@ public class FoxEssClient {
     }
 
     /**
-     * Builds the HMAC-style MD5 signature required by the Fox ESS Open API.
+     * Builds the MD5 signature required by the Fox ESS Open API.
+     *
+     * <p>The separator between path/token/timestamp must be the literal text
+     * {@code \r\n} (backslash-r, backslash-n), not an actual carriage-return
+     * and line-feed — sending real CR/LF bytes is rejected with errno 40256
+     * ("illegal signature").
      *
      * @param path      API path (e.g. {@code /op/v0/device/real/query})
      * @param timestamp current Unix epoch in milliseconds
      * @return lowercase hex MD5 digest
      */
     private String buildSignature(String path, long timestamp) {
-        String payload = "token=%s&path=%s&timestamp=%d&lang=%s"
-                .formatted(props.apiKey(), path, timestamp, LANG);
+        String payload = path + "\\r\\n" + props.apiKey() + "\\r\\n" + timestamp;
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] digest = md.digest(payload.getBytes(StandardCharsets.UTF_8));

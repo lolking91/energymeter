@@ -34,6 +34,9 @@ public class InfluxDbService {
         this.influxDBClient = influxDBClient;
     }
 
+    // Fixed device tag used for all Fox ESS writes — single-inverter setup
+    private static final String FOXESS_DEVICE_TAG = "foxess-inverter";
+
     /**
      * Writes a snapshot of Fox ESS device variables to InfluxDB.
      *
@@ -41,17 +44,16 @@ public class InfluxDbService {
      * point with the current timestamp. Variables with a {@code null} value are
      * skipped to avoid gaps in Grafana panels.
      *
-     * @param deviceSn  serial number used as an InfluxDB tag
      * @param variables list of readings returned by the Fox ESS API
      */
-    public void writeDataPoints(String deviceSn, List<DeviceVariable> variables) {
+    public void writeDataPoints(List<DeviceVariable> variables) {
         if (variables.isEmpty()) {
-            log.warn("No variables to write for device {}", deviceSn);
+            log.warn("No Fox ESS variables to write");
             return;
         }
 
         Point point = Point.measurement(MEASUREMENT)
-                .setTag("device", deviceSn)
+                .setTag("device", FOXESS_DEVICE_TAG)
                 .setTimestamp(Instant.now());
 
         for (DeviceVariable variable : variables) {
@@ -62,7 +64,7 @@ public class InfluxDbService {
 
         influxDBClient.writePoint(point);
 
-        log.debug("Wrote {} fields for device {} to InfluxDB", variables.size(), deviceSn);
+        log.debug("Wrote {} fields for device '{}' to InfluxDB", variables.size(), FOXESS_DEVICE_TAG);
     }
 
     /**

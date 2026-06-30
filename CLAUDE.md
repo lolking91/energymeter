@@ -81,7 +81,11 @@ secret is needed beyond the device's IP/hostname.
   strings so the app still starts without them when disabled.
 - **Base URL:** `https://www.foxesscloud.com`
 - **Auth:** MD5 signature per request – see `FoxEssClient.buildSignature()`
-  Formula: `MD5("token={apiKey}&path={path}&timestamp={epoch_ms}&lang=en")`
+  Formula: `MD5(path + "\r\n" + apiKey + "\r\n" + epoch_ms)`, where `\r\n` is
+  the **literal text** backslash-r-backslash-n, not an actual CR/LF byte
+  sequence — sending real CR/LF is rejected with errno 40256 ("illegal
+  signature"). Confirmed against the live API; see also
+  [docs/postman/](docs/postman/) for a manual-test Postman collection.
 - **Real-time endpoint:** `POST /op/v0/device/real/query`
 - **Key variables polled:** `pvPower`, `generationPower`, `feedInPower`,
   `gridConsumptionPower`, `loadsPower`, `SoC`

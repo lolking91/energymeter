@@ -60,7 +60,7 @@ public class FoxessDataScheduler {
         log.info("Fetching Fox ESS data for device {}", foxEssProperties.deviceSn());
         try {
             List<DeviceVariable> readings = foxEssService.fetchCurrentReadings();
-            influxDbService.writeDataPoints(foxEssProperties.deviceSn(), readings);
+            influxDbService.writeDataPoints(readings);
             healthStatus.recordSuccess(readings.size());
             log.info("Stored {} variables for device {}", readings.size(), foxEssProperties.deviceSn());
         } catch (FoxEssApiException e) {

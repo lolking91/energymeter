@@ -1,0 +1,242 @@
+{
+  "uid": "pv-comparison",
+  "title": "PV – Shelly vs. Fox ESS",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "panels": [
+    {
+      "id": 1,
+      "title": "PV Power – Shelly vs. Fox ESS",
+      "description": "Shelly PM Mini (solar): measured AC power at the inverter feed, sign-inverted to positive. Fox ESS: pvPower (DC-side PV input) and generationPower (AC output). All values in Watts.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-energy-raw"
+      },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Shelly (solar)" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } },
+              { "id": "unit", "value": "watt" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Fox ESS – pvPower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } },
+              { "id": "unit", "value": "watt" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Fox ESS – generationPower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } },
+              { "id": "unit", "value": "watt" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["last", "max", "mean"]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-energy-raw"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT time, (-power) AS \"Shelly (solar)\" FROM energy WHERE device = 'solar' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-energy-raw"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT time, (pvPower * 1000) AS \"Fox ESS – pvPower\" FROM energy WHERE device = 'foxess-inverter' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-energy-raw"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT time, (generationPower * 1000) AS \"Fox ESS – generationPower\" FROM energy WHERE device = 'foxess-inverter' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Feed-in Power (Fox ESS)",
+      "description": "Power currently fed into the grid, in Watts.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-energy-raw"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "feedinPower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } },
+              { "id": "unit", "value": "watt" }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-energy-raw"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT time, (feedinPower * 1000) AS \"feedinPower\" FROM energy WHERE device = 'foxess-inverter' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Today's Yield (Fox ESS)",
+      "description": "Total PV energy yield for today in Wh.",
+      "type": "stat",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-energy-raw"
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watth",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 500 },
+              { "color": "orange", "value": 1000 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["last"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-energy-raw"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT time, (todayYield * 1000) AS \"todayYield\" FROM energy WHERE device = 'foxess-inverter' AND $__timeFilter(time) ORDER BY time DESC LIMIT 1",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Lifetime Yield (Fox ESS)",
+      "description": "Total PV energy generated since commissioning in kWh.",
+      "type": "stat",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-energy-raw"
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kwatth",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["last"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-energy-raw"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT time, PVEnergyTotal AS \"PVEnergyTotal\" FROM energy WHERE device = 'foxess-inverter' AND $__timeFilter(time) ORDER BY time DESC LIMIT 1",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Grid Consumption (Fox ESS)",
+      "description": "Power currently drawn from the grid, in Watts.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-energy-raw"
+      },
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-energy-raw"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT time, (gridConsumptionPower * 1000) AS \"gridConsumptionPower\" FROM energy WHERE device = 'foxess-inverter' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    }
+  ],
+  "templating": { "list": [] }
+}
