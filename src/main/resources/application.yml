@@ -24,6 +24,12 @@ shelly:
     - name: solar
       host: ${SHELLY_SOLAR_HOST}
       type: pm-mini
+    - name: house-total
+      host: ${SHELLY_HOUSE_TOTAL_HOST}
+      type: pro-3em
+    - name: upper-unit
+      host: ${SHELLY_UPPER_UNIT_HOST}
+      type: pro-3em
 
 # Polling schedule
 scheduler:

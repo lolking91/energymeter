@@ -1,0 +1,229 @@
+{
+  "uid": "consumption-3em",
+  "title": "Consumption – Shelly Pro 3EM",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Active Power",
+      "description": "Combined active power across all three phases in Watts.",
+      "type": "timeseries",
+      "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "totalActivePower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max", "mean"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+          "rawQuery": true,
+          "rawSql": "SELECT time, \"totalActivePower\" AS \"totalActivePower\" FROM energy WHERE device = '$device' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Active Power per Phase",
+      "description": "Active power (W) for each phase individually.",
+      "type": "timeseries",
+      "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "lineWidth": 2, "fillOpacity": 5 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "aActivePower" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "bActivePower" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "cActivePower" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max", "mean"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+          "rawQuery": true,
+          "rawSql": "SELECT time, \"aActivePower\" AS \"aActivePower\", \"bActivePower\" AS \"bActivePower\", \"cActivePower\" AS \"cActivePower\" FROM energy WHERE device = '$device' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Current per Phase",
+      "description": "Current (A) per phase.",
+      "type": "timeseries",
+      "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "custom": { "lineWidth": 2, "fillOpacity": 5 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "aCurrent" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "bCurrent" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "cCurrent" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max", "mean"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+          "rawQuery": true,
+          "rawSql": "SELECT time, \"aCurrent\" AS \"aCurrent\", \"bCurrent\" AS \"bCurrent\", \"cCurrent\" AS \"cCurrent\" FROM energy WHERE device = '$device' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Voltage per Phase",
+      "description": "Voltage (V) per phase.",
+      "type": "timeseries",
+      "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "custom": { "lineWidth": 2, "fillOpacity": 5 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "aVoltage" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "bVoltage" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "cVoltage" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max", "mean"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+          "rawQuery": true,
+          "rawSql": "SELECT time, \"aVoltage\" AS \"aVoltage\", \"bVoltage\" AS \"bVoltage\", \"cVoltage\" AS \"cVoltage\" FROM energy WHERE device = '$device' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Power Factor per Phase",
+      "description": "Power factor (0–1) per phase. Values close to 1 indicate efficient, resistive loads. Low values indicate inductive or capacitive loads with high reactive current.",
+      "type": "timeseries",
+      "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": { "lineWidth": 2, "fillOpacity": 5 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "aPowerFactor" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "bPowerFactor" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "cPowerFactor" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "min", "mean"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb-energy-raw" },
+          "rawQuery": true,
+          "rawSql": "SELECT time, \"aPowerFactor\" AS \"aPowerFactor\", \"bPowerFactor\" AS \"bPowerFactor\", \"cPowerFactor\" AS \"cPowerFactor\" FROM energy WHERE device = '$device' AND $__timeFilter(time) ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "device",
+        "label": "Device",
+        "type": "custom",
+        "query": "house-total,upper-unit",
+        "current": { "value": "house-total", "text": "house-total" },
+        "options": [
+          { "value": "house-total", "text": "house-total", "selected": true },
+          { "value": "upper-unit", "text": "upper-unit", "selected": false }
+        ],
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  }
+}

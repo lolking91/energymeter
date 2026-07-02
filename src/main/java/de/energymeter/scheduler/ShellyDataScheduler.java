@@ -46,12 +46,19 @@ public class ShellyDataScheduler {
     )
     public void collectAndStore() {
         try {
-            List<ShellyService.Reading> readings = shellyService.fetchPmMiniReadings();
-            for (ShellyService.Reading reading : readings) {
+            List<ShellyService.Reading> pmReadings = shellyService.fetchPmMiniReadings();
+            for (ShellyService.Reading reading : pmReadings) {
                 influxDbService.writeShellyReading(reading);
             }
-            healthStatus.recordSuccess(readings.size());
-            log.info("Stored readings for {} Shelly device(s)", readings.size());
+
+            List<ShellyService.EmReading> emReadings = shellyService.fetchPro3emReadings();
+            for (ShellyService.EmReading reading : emReadings) {
+                influxDbService.writeShellyEmReading(reading);
+            }
+
+            int total = pmReadings.size() + emReadings.size();
+            healthStatus.recordSuccess(total);
+            log.info("Stored readings for {} Shelly device(s)", total);
         } catch (Exception e) {
             healthStatus.recordFailure(e.getMessage());
             log.error("Unexpected error during Shelly data collection", e);

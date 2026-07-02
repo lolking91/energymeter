@@ -4,6 +4,7 @@ import com.influxdb.v3.client.InfluxDBClient;
 import com.influxdb.v3.client.Point;
 import de.energymeter.foxess.dto.DeviceVariable;
 import de.energymeter.shelly.ShellyService;
+import de.energymeter.shelly.dto.EmStatus;
 import de.energymeter.shelly.dto.Pm1Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,5 +103,54 @@ public class InfluxDbService {
         influxDBClient.writePoint(point);
 
         log.debug("Wrote Shelly reading for device {} to InfluxDB", reading.deviceName());
+    }
+
+    /**
+     * Writes a single Shelly Pro 3EM reading to InfluxDB.
+     *
+     * <p>Uses the same {@code energy} measurement as the other sources, with one
+     * field per phase (current/voltage/active power/apparent power/power factor)
+     * plus the three-phase totals.
+     *
+     * @param reading Shelly Pro 3EM reading, tagged with its configured logical device name
+     */
+    public void writeShellyEmReading(ShellyService.EmReading reading) {
+        EmStatus status = reading.status();
+
+        Point point = Point.measurement(MEASUREMENT)
+                .setTag("device", reading.deviceName())
+                .setTimestamp(Instant.now());
+
+        setFieldIfPresent(point, "aCurrent", status.aCurrent());
+        setFieldIfPresent(point, "aVoltage", status.aVoltage());
+        setFieldIfPresent(point, "aActivePower", status.aActivePower());
+        setFieldIfPresent(point, "aApparentPower", status.aApparentPower());
+        setFieldIfPresent(point, "aPowerFactor", status.aPowerFactor());
+
+        setFieldIfPresent(point, "bCurrent", status.bCurrent());
+        setFieldIfPresent(point, "bVoltage", status.bVoltage());
+        setFieldIfPresent(point, "bActivePower", status.bActivePower());
+        setFieldIfPresent(point, "bApparentPower", status.bApparentPower());
+        setFieldIfPresent(point, "bPowerFactor", status.bPowerFactor());
+
+        setFieldIfPresent(point, "cCurrent", status.cCurrent());
+        setFieldIfPresent(point, "cVoltage", status.cVoltage());
+        setFieldIfPresent(point, "cActivePower", status.cActivePower());
+        setFieldIfPresent(point, "cApparentPower", status.cApparentPower());
+        setFieldIfPresent(point, "cPowerFactor", status.cPowerFactor());
+
+        setFieldIfPresent(point, "totalCurrent", status.totalCurrent());
+        setFieldIfPresent(point, "totalActivePower", status.totalActivePower());
+        setFieldIfPresent(point, "totalApparentPower", status.totalApparentPower());
+
+        influxDBClient.writePoint(point);
+
+        log.debug("Wrote Shelly Pro 3EM reading for device {} to InfluxDB", reading.deviceName());
+    }
+
+    private void setFieldIfPresent(Point point, String field, Double value) {
+        if (value != null) {
+            point.setField(field, value);
+        }
     }
 }

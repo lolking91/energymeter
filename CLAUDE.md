@@ -14,11 +14,10 @@ Home energy monitoring system covering both **production** and **consumption**:
 Polls all sources on a schedule, persists readings to InfluxDB 3, and
 visualises them in Grafana.
 
-> **Status:** Only Fox ESS and the Shelly PM Mini (`solar`) are implemented so
-> far. The 3x Shelly Pro 3EM devices are planned but not yet wired up —
-> implement as a new `type` in `ShellyProperties`/`ShellyService` once the
-> Pro 3EM's RPC payload (likely `EM.GetStatus`, 3-phase) has been verified
-> against a real device.
+> **Status:** Fox ESS, the Shelly PM Mini (`solar`), and two of the three
+> Shelly Pro 3EM devices (`house-total`, `upper-unit`) are implemented.
+> `lower-unit` is configured the same way once that device is installed —
+> just add a third entry under `shelly.devices`.
 
 ## Tech Stack
 
@@ -66,6 +65,8 @@ lives in `.env.example`.
 | `FOXESS_API_KEY`                  | Fox ESS Open API key             |
 | `FOXESS_DEVICE_SN`                | Inverter serial number           |
 | `SHELLY_SOLAR_HOST`               | IP/hostname of the Shelly PM Mini |
+| `SHELLY_HOUSE_TOTAL_HOST`         | IP/hostname of the whole-house Shelly Pro 3EM |
+| `SHELLY_UPPER_UNIT_HOST`          | IP/hostname of the upper-apartment Shelly Pro 3EM |
 | `INFLUXDB_TOKEN`                  | InfluxDB admin token             |
 | `DOCKER_INFLUXDB_INIT_*`          | InfluxDB first-run setup         |
 | `GF_SECURITY_ADMIN_PASSWORD`      | Grafana admin password           |
@@ -87,8 +88,9 @@ secret is needed beyond the device's IP/hostname.
   signature"). Confirmed against the live API; see also
   [docs/postman/](docs/postman/) for a manual-test Postman collection.
 - **Real-time endpoint:** `POST /op/v0/device/real/query`
-- **Key variables polled:** `pvPower`, `generationPower`, `feedInPower`,
-  `gridConsumptionPower`, `loadsPower`, `SoC`
+- **Key variables polled:** `pvPower`, `generationPower`, `feedinPower`,
+  `gridConsumptionPower`, `todayYield`, `generation` (lifetime kWh),
+  `RVolt`, `RFreq`, `invTemperation`, `pv1–pv4 Volt/Current/Power`
 - Fox ESS refreshes device data roughly every 5 minutes; the default polling
   interval (`SCHEDULER_INTERVAL_MS=300000`) matches this cadence.
 
@@ -97,9 +99,10 @@ secret is needed beyond the device's IP/hostname.
 - Local, unauthenticated RPC API (Gen2/Gen3) — no cloud dependency
 - **PM Mini (Gen3, single-phase, implemented):** `GET http://<host>/rpc/PM1.GetStatus?id=0`
   → `apower` (W), `voltage` (V), `current` (A), `freq` (Hz), `aenergy.total` (Wh)
-- **Pro 3EM 120A (3-phase, not yet implemented):** expected to use
-  `GET http://<host>/rpc/EM.GetStatus?id=0` (per-phase + total active power) —
-  verify exact response shape against a real device before implementing
+- **Pro 3EM 120A (3-phase, implemented):** `GET http://<host>/rpc/EM.GetStatus?id=0`
+  → per phase (`a`/`b`/`c`): `*_current` (A), `*_voltage` (V), `*_act_power` (W),
+  `*_aprt_power` (VA), `*_pf` (power factor); totals: `total_current` (A),
+  `total_act_power` (W), `total_aprt_power` (VA). Verified against real devices.
 - Devices are configured as a list under `shelly.devices` in `application.yml`
   (`name`, `host`, `type`); `ShellyService` filters by `type` per supported
   device kind

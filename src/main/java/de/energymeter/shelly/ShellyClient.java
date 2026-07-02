@@ -1,5 +1,6 @@
 package de.energymeter.shelly;
 
+import de.energymeter.shelly.dto.EmStatus;
 import de.energymeter.shelly.dto.Pm1Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,26 @@ public class ShellyClient {
                     .uri(uri)
                     .retrieve()
                     .body(Pm1Status.class);
+        } catch (RestClientException e) {
+            throw new ShellyApiException("Failed to reach Shelly device at " + host, e);
+        }
+    }
+
+    /**
+     * Fetches the three-phase power meter status from a Shelly Pro 3EM (Gen3).
+     *
+     * @param host IP address or hostname of the device on the local network
+     * @return parsed status; never {@code null}
+     * @throws ShellyApiException if the device is unreachable or returns an error
+     */
+    public EmStatus fetchEmStatus(String host) {
+        String uri = "http://%s/rpc/EM.GetStatus?id=0".formatted(host);
+        log.debug("Calling Shelly RPC API: {}", uri);
+        try {
+            return restClient.get()
+                    .uri(uri)
+                    .retrieve()
+                    .body(EmStatus.class);
         } catch (RestClientException e) {
             throw new ShellyApiException("Failed to reach Shelly device at " + host, e);
         }

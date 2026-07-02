@@ -27,3 +27,9 @@ shelly:
     - name: solar
       host: 192.168.x.x
       type: pm-mini
+    - name: house-total
+      host: 192.168.x.x
+      type: pro-3em
+    - name: upper-unit
+      host: 192.168.x.x
+      type: pro-3em

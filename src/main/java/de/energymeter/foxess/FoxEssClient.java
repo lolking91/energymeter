@@ -59,12 +59,24 @@ public class FoxEssClient {
         Map<String, Object> body = Map.of(
                 "sn", props.deviceSn(),
                 "variables", List.of(
+                        // AC output
                         "pvPower",
                         "generationPower",
-                        "feedinPower",          // note lowercase "in" - API field is "feedinPower", not "feedInPower"
+                        "feedinPower",              // lowercase "in" — not "feedInPower"
                         "gridConsumptionPower",
-                        "todayYield",           // today's PV yield in kWh
-                        "PVEnergyTotal"         // lifetime PV yield in kWh
+                        // Energy totals
+                        "todayYield",               // today's yield in kWh
+                        "generation",               // cumulative lifetime yield in kWh
+                        // Grid
+                        "RVolt",                    // grid voltage (V), phase R (single-phase inverter)
+                        "RFreq",                    // grid frequency (Hz)
+                        // Inverter health
+                        "invTemperation",           // inverter temperature (°C)
+                        // DC strings (pv1–pv4: only pv1/pv2 physically connected on M1-800-E)
+                        "pv1Volt", "pv1Current", "pv1Power",
+                        "pv2Volt", "pv2Current", "pv2Power",
+                        "pv3Volt", "pv3Current", "pv3Power",
+                        "pv4Volt", "pv4Current", "pv4Power"
                 )
         );
 
